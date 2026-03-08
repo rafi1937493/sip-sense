@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// User model for SipSense
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  weight        Float?
+  height        Float?
+  dateOfBirth   DateTime?
+  dailyGoal     Int       @default(2500)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  drinkLogs     DrinkLog[]
+  
+  @@map("users")
+}
+
+// DrinkLog model to track drinks
+model DrinkLog {
+  id               String   @id @default(cuid())
+  userId           String
+  drinkType        String
+  quantityMl       Int
+  hydrationAmount  Float
+  createdAt        DateTime @default(now())
+  
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, createdAt])
+  @@map("drink_logs")
+}
