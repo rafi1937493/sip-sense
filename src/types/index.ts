@@ -56,6 +56,7 @@ export interface DrinkLogEntry {
   drinkType: string
   quantityMl: number
   hydrationAmount: number
+  icon?: string
   createdAt: Date
 }
 
@@ -65,11 +66,19 @@ export interface UserProfile {
   email: string
   name?: string
   weight?: number
+  weightUnit?: 'kg' | 'lbs'
   height?: number
-  dateOfBirth?: Date
+  heightUnit?: 'cm' | 'ft'
+  avatarColor?: string
+  avatarImage?: string
+  dateOfBirth?: Date | string
   dailyGoal: number
   createdAt?: Date
   updatedAt?: Date
+  remindersEnabled?: boolean
+  reminderStart?: string
+  reminderEnd?: string
+  reminderInterval?: number
 }
 
 // Daily goal options

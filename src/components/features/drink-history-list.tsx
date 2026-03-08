@@ -16,13 +16,18 @@ interface DrinkHistoryListProps {
 export function DrinkHistoryList({ logs, onDelete, onEdit }: DrinkHistoryListProps) {
   if (logs.length === 0) {
     return (
-      <Card className="surface-card">
-        <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-          <div className="text-3xl">{"\u{1F4A7}"}</div>
-          <p className="font-medium">No drinks logged yet</p>
-          <p className="text-muted-foreground text-sm">Add your first drink to start tracking hydration.</p>
-        </CardContent>
-      </Card>
+      <div className="rounded-[2rem] bg-white overflow-hidden border-2 border-dashed border-slate-200/60" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.04)" }}>
+        <div className="flex flex-col items-center justify-center py-32 text-center px-10 gap-5">
+          <div className="relative w-20 h-20 flex items-center justify-center">
+            <div className="absolute inset-0 bg-blue-100/40 blur-2xl rounded-full scale-110" />
+            <span className="relative text-5xl leading-none select-none">💧</span>
+          </div>
+          <div className="flex flex-col gap-2">
+            <p className="text-lg font-bold text-slate-700">No drinks logged yet</p>
+            <p className="text-[13px] font-normal text-[#9ca3af] tracking-tight">Add your first drink to start tracking hydration.</p>
+          </div>
+        </div>
+      </div>
     )
   }
 
@@ -53,7 +58,7 @@ function DrinkHistoryItem({ log, onDelete, onEdit }: DrinkHistoryItemProps) {
     <Card className={isDeleting ? "surface-card translate-x-4 opacity-0 transition-all" : "surface-card transition-all"} role="listitem">
       <CardContent className="flex items-center gap-3 py-4">
         <div className="bg-primary/10 flex size-11 items-center justify-center rounded-xl text-lg">
-          {DRINK_EMOJIS[log.drinkType] || "\u{1F4A7}"}
+          {log.icon || DRINK_EMOJIS[log.drinkType] || "💧"}
         </div>
         <div className="min-w-0 flex-1 space-y-1">
           <p className="truncate text-sm font-semibold">{log.drinkType}</p>

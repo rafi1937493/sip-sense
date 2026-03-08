@@ -1,65 +1,57 @@
 {
   "name": "SipSense - Hydration Tracker",
   "short_name": "SipSense",
-  "description": "Track your daily hydration with SipSense - the fun and easy way to stay hydrated",
+  "description": "Track your daily hydration naturally",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#F8FAFC",
-  "theme_color": "#3BA7FF",
   "orientation": "portrait",
+  "background_color": "#0a1628",
+  "theme_color": "#0a1628",
+  "categories": ["health", "fitness", "lifestyle"],
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
-      "src": "/icons/icon-72x72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-96x96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-128x128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-144x144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-152x152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-192x192.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
-      "src": "/icons/icon-384x384.png",
-      "sizes": "384x384",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "maskable"
     },
     {
-      "src": "/icons/icon-512x512.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "categories": ["health", "fitness", "lifestyle"],
-  "lang": "en-BD",
-  "dir": "ltr",
-  "scope": "/",
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Add Drink",
+      "short_name": "Add Drink",
+      "description": "Quickly log a new drink",
+      "url": "/?action=add",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
   "prefer_related_applications": false
 }
