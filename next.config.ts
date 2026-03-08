@@ -1,8 +1,19 @@
 import type { NextConfig } from "next";
-import withPWA from "next-pwa";
+
+// next-pwa uses CommonJS, so we need to use require
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const withPWA = require("next-pwa") as (config: {
+  dest: string;
+  register: boolean;
+  skipWaiting: boolean;
+  disable: boolean;
+  manifest: Record<string, unknown>;
+}) => (nextConfig: NextConfig) => NextConfig;
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  // Required for Next.js 16+ with next-pwa (webpack-based)
+  turbopack: {},
 };
 
 const pwaConfig = withPWA({
