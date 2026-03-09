@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, ArrowRight, Check } from "lucide-react"
 import { useHydrationStore } from "@/store"
@@ -123,14 +123,16 @@ export default function PremiumOnboardingPage() {
   }, [recommendedGoal]);
 
   // Auto-select when arriving at goal step
+  const prevStepRef = useRef(step);
+  
   useEffect(() => {
-    if (step === 'goal') {
-      if (typeof recommendedOption === 'number') {
-        setFormData(p => ({ ...p, dailyGoal: recommendedOption }));
-      } else {
-        setFormData(p => ({ ...p, dailyGoal: recommendedGoal }));
-      }
+    // Only run when transitioning TO goal step (not on initial mount)
+    if (prevStepRef.current !== 'goal' && step === 'goal') {
+      const goal = typeof recommendedOption === 'number' ? recommendedOption : recommendedGoal;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFormData(p => ({ ...p, dailyGoal: goal }));
     }
+    prevStepRef.current = step;
   }, [step, recommendedOption, recommendedGoal]);
 
   // Show loading while checking session
@@ -234,7 +236,7 @@ export default function PremiumOnboardingPage() {
 
       {/* ─── Step indicator dots ─── */}
       <div className="absolute top-12 left-1/2 z-20 flex -translate-x-1/2 gap-2">
-        {(["welcome", "profile", "goal"] as Step[]).map((s, idx) => (
+        {(["welcome", "profile", "goal"] as Step[]).map((s) => (
           <div
             key={s}
             className={`h-1.5 rounded-full transition-all duration-500 ${
@@ -308,7 +310,7 @@ export default function PremiumOnboardingPage() {
               </svg>
             </div>
             <h2 className="text-2xl font-extrabold text-white tracking-tight">Your Profile</h2>
-            <p className="mt-1 text-sm font-medium text-blue-200/80">Let's get acquainted</p>
+            <p className="mt-1 text-sm font-medium text-blue-200/80">Let&apos;s get acquainted</p>
           </div>
 
           {/* ─── Light Form Area ─── */}
@@ -546,7 +548,7 @@ export default function PremiumOnboardingPage() {
                   <input
                     type="number"
                     placeholder="Custom goal (ml)..."
-                    value={DAILY_GOAL_OPTIONS.includes(formData.dailyGoal as any) ? "" : formData.dailyGoal || ""}
+                    value={!DAILY_GOAL_OPTIONS.includes(formData.dailyGoal as typeof DAILY_GOAL_OPTIONS[number]) ? formData.dailyGoal || "" : ""}
                     onChange={(e) => setFormData((p) => ({ ...p, dailyGoal: Number(e.target.value) || 0 }))}
                     className="h-14 w-full appearance-none rounded-2xl bg-[#dde4ee] px-6 text-center text-base font-bold text-slate-900 shadow-[inset_4px_4px_8px_#c2ccda,inset_-4px_-4px_8px_#ffffff] outline-none transition-all placeholder:text-slate-400 focus:shadow-[inset_5px_5px_10px_#c2ccda,inset_-5px_-5px_10px_#ffffff,0_0_0_2px_rgba(59,130,246,0.25)]"
                   />
@@ -559,7 +561,7 @@ export default function PremiumOnboardingPage() {
                 onClick={handleNext}
                 className="mx-auto flex h-[58px] w-full max-w-[320px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 text-lg font-bold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40 hover:shadow-xl active:scale-[0.98]"
               >
-                Let's Hydrate <ArrowRight className="size-5" />
+                Let&apos;s Hydrate <ArrowRight className="size-5" />
               </button>
             </div>
           </div>
