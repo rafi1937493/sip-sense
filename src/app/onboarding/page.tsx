@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useLayoutEffect, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, ArrowRight, Check } from "lucide-react"
 import { useHydrationStore } from "@/store"
@@ -8,7 +8,7 @@ import { DAILY_GOAL_OPTIONS } from "@/types"
 import { cn } from "@/lib/utils"
 import { authClient } from "@/lib/auth"
 
-type Step = "welcome" | "info" | "goal"
+type Step = "welcome" | "profile" | "goal"
 
 // Perfect 3D luminous sphere
 const WaterSphere = () => (
@@ -58,94 +58,6 @@ const WaterSphere = () => (
   </div>
 )
 
-// ─── Custom Date Dropdown Picker Components ───
-
-const DateDropdownPicker = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => {
-  // Initialize date
-  const date = value ? new Date(value) : null;
-  const day = date ? date.getDate() : "";
-  const month = date ? date.getMonth() : "";
-  const year = date ? date.getFullYear() : "";
-
-  const years = Array.from({ length: 71 }, (_, i) => 1940 + i);
-  const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
-  
-  // Calculate days based on year and month if available, else default 31
-  const daysInMonth = (year && typeof month === 'number') 
-    ? new Date(Number(year), month + 1, 0).getDate() 
-    : 31;
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-
-  const handleUpdate = (type: 'd' | 'm' | 'y', val: string) => {
-    const newDay = type === 'd' ? Number(val) : (day || 1);
-    const newMonth = type === 'm' ? Number(val) : (month === "" ? 0 : Number(month));
-    const newYear = type === 'y' ? Number(val) : (year || 2000);
-    
-    const d = new Date(newYear, newMonth, newDay);
-    onChange(d.toISOString().split('T')[0]);
-  };
-
-  const selectClasses = "h-14 w-full bg-white rounded-[10px] border-[1.5px] border-[#e2e8f0] px-4 text-base font-semibold text-slate-800 outline-none focus:border-blue-500 transition-all shadow-sm appearance-none";
-
-  return (
-    <div className="flex gap-3 mt-1 w-full items-center">
-      {/* Month dropdown */}
-      <div className="flex-1 relative min-w-0">
-        <select 
-          value={month} 
-          onChange={(e) => handleUpdate('m', e.target.value)}
-          className={selectClasses}
-        >
-          <option value="" disabled>Month</option>
-          {months.map((m, i) => <option key={m} value={i}>{m}</option>)}
-        </select>
-        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-          <svg className="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      </div>
-
-      {/* Day dropdown */}
-      <div className="flex-1 relative min-w-0">
-        <select 
-          value={day} 
-          onChange={(e) => handleUpdate('d', e.target.value)}
-          className={selectClasses}
-        >
-          <option value="" disabled>Day</option>
-          {days.map(d => <option key={d} value={d}>{d}</option>)}
-        </select>
-        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-          <svg className="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      </div>
-
-      {/* Year dropdown */}
-      <div className="flex-1 relative min-w-0">
-        <select 
-          value={year} 
-          onChange={(e) => handleUpdate('y', e.target.value)}
-          className={selectClasses}
-        >
-          <option value="" disabled>Year</option>
-          {years.map(y => <option key={y} value={y}>{y}</option>)}
-        </select>
-        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-          <svg className="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export default function PremiumOnboardingPage() {
   const router = useRouter()
   const { data: session, isPending: isLoading } = authClient.useSession()
@@ -153,17 +65,19 @@ export default function PremiumOnboardingPage() {
   // All hooks must be called before any early returns
   const [step, setStep] = useState<Step>("welcome")
   const [formData, setFormData] = useState({
+    name: "",
+    email: "",
     weight: "",
     weightUnit: "kg" as "kg" | "lbs",
     height: "",
     heightFt: "",
     heightIn: "",
     heightUnit: "cm" as "cm" | "ft",
-    dateOfBirth: "",
+    age: "",
     dailyGoal: 2500,
   })
 
-  const { setUser, setIsOnboarded } = useHydrationStore()
+  const { setUser, setIsOnboarded, setOnboardingComplete } = useHydrationStore()
 
   // Redirect to home if user is already logged in
   useEffect(() => {
@@ -172,18 +86,18 @@ export default function PremiumOnboardingPage() {
     }
   }, [session, isLoading, router])
 
-  // Smart Hydration Goal Calculation
+  // Smart Hydration Goal Calculation using age
   const recommendedGoal = useMemo(() => {
     // Return default when loading to maintain hook order
-    if (isLoading || !formData.weight || !formData.dateOfBirth) return 2500;
+    if (isLoading || !formData.weight || !formData.age) return 2500;
     
     // Weight conversion to kg
     let w = Number(formData.weight);
     if (formData.weightUnit === 'lbs') w = w / 2.20462;
     
-    // Age calculation
-    const birthDate = new Date(formData.dateOfBirth);
-    const age = new Date().getFullYear() - birthDate.getFullYear();
+    // Age from form
+    const age = Number(formData.age);
+    if (!age || isNaN(age)) return 2500;
     
     // Base formula: 35ml per kg of body weight
     let base = w * 35;
@@ -194,7 +108,7 @@ export default function PremiumOnboardingPage() {
     
     // Round to nearest 50ml
     return Math.round(base / 50) * 50;
-  }, [isLoading, formData.weight, formData.weightUnit, formData.dateOfBirth]);
+  }, [isLoading, formData.weight, formData.weightUnit, formData.age]);
 
   // Which option is the "Recommended" one?
   const recommendedOption = useMemo(() => {
@@ -249,29 +163,42 @@ export default function PremiumOnboardingPage() {
 
     setUser({
       id: '00000000-0000-0000-0000-000000000001',
-      email: "user@sipsense.app",
-      name: "User",
+      email: formData.email || "user@sipsense.app",
+      name: formData.name || "User",
       weight: finalWeight,
+      weightUnit: formData.weightUnit,
       height: finalHeight,
-      dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined,
+      heightUnit: formData.heightUnit,
+      age: formData.age ? Number(formData.age) : undefined,
       dailyGoal: formData.dailyGoal,
       createdAt: new Date(),
       updatedAt: new Date(),
     })
+    
+    // Save onboarding_complete to localStorage
+    localStorage.setItem('onboarding_complete', 'true')
+    setOnboardingComplete(true)
     setIsOnboarded(true)
+    
     setTimeout(() => router.push("/"), 200)
   }
 
   const handleNext = () => {
-    if (step === "welcome") return setStep("info")
-    if (step === "info") return setStep("goal")
+    if (step === "welcome") return setStep("profile")
+    if (step === "profile") return setStep("goal")
     handleSubmit()
   }
 
   const handleBack = () => {
-    if (step === "goal") return setStep("info")
-    if (step === "info") return setStep("welcome")
+    if (step === "goal") return setStep("profile")
+    if (step === "profile") return setStep("welcome")
   }
+
+  // Calculate the header height based on step
+  const getHeaderHeight = () => {
+    if (step === "welcome") return "62%";
+    return "32%";
+  };
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#e8edf4] font-sans">
@@ -281,12 +208,12 @@ export default function PremiumOnboardingPage() {
         {/* Dark top section */}
         <div
           className="absolute left-0 right-0 top-0 bg-gradient-to-b from-[#0d1b2a] to-[#1a2f4a] transition-all duration-700"
-          style={{ height: step === "welcome" ? "62%" : "32%" }}
+          style={{ height: getHeaderHeight() }}
         />
         {/* Wave SVG sits right at the boundary */}
         <div
           className="absolute left-0 right-0 overflow-hidden transition-all duration-700"
-          style={{ top: step === "welcome" ? "calc(62% - 1px)" : "calc(32% - 1px)" }}
+          style={{ top: `calc(${getHeaderHeight()} - 1px)` }}
         >
           <svg
             viewBox="0 0 1440 100"
@@ -307,7 +234,7 @@ export default function PremiumOnboardingPage() {
 
       {/* ─── Step indicator dots ─── */}
       <div className="absolute top-12 left-1/2 z-20 flex -translate-x-1/2 gap-2">
-        {(["welcome", "info", "goal"] as Step[]).map((s) => (
+        {(["welcome", "profile", "goal"] as Step[]).map((s, idx) => (
           <div
             key={s}
             className={`h-1.5 rounded-full transition-all duration-500 ${
@@ -367,9 +294,9 @@ export default function PremiumOnboardingPage() {
       )}
 
       {/* ═══════════════════════════════════════════
-          STEP: INFO
+          STEP: PROFILE (Your Profile)
       ═══════════════════════════════════════════ */}
-      {step === "info" && (
+      {step === "profile" && (
         <div className="absolute inset-0 z-10 flex flex-col animate-in slide-in-from-right-8 fade-in duration-500">
 
           {/* ─── Dark Header ─── */}
@@ -381,12 +308,46 @@ export default function PremiumOnboardingPage() {
               </svg>
             </div>
             <h2 className="text-2xl font-extrabold text-white tracking-tight">Your Profile</h2>
-            <p className="mt-1 text-sm font-medium text-blue-200/80">Personalize your hydration plan</p>
+            <p className="mt-1 text-sm font-medium text-blue-200/80">Let's get acquainted</p>
           </div>
 
           {/* ─── Light Form Area ─── */}
-          <div className="flex flex-1 flex-col px-6 pt-8">
+          <div className="flex flex-1 flex-col px-6 pt-8 overflow-y-auto">
             <div className="space-y-4">
+              {/* Full Name */}
+              <div className="relative">
+                <label className="ml-1 mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <input
+                    id="name"
+                    type="text"
+                    value={formData.name || ""}
+                    placeholder="e.g. Rafi"
+                    onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
+                    className="h-14 w-full appearance-none rounded-2xl bg-[#dde4ee] px-5 text-base font-semibold text-slate-800 placeholder:text-slate-400 shadow-[inset_4px_4px_8px_#c2ccda,inset_-4px_-4px_8px_#ffffff] outline-none transition-all focus:shadow-[inset_5px_5px_10px_#c2ccda,inset_-5px_-5px_10px_#ffffff,0_0_0_2px_rgba(59,130,246,0.25)]"
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div className="relative">
+                <label className="ml-1 mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <input
+                    id="email"
+                    type="email"
+                    value={formData.email || ""}
+                    placeholder="e.g. rafi@email.com"
+                    onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
+                    className="h-14 w-full appearance-none rounded-2xl bg-[#dde4ee] px-5 text-base font-semibold text-slate-800 placeholder:text-slate-400 shadow-[inset_4px_4px_8px_#c2ccda,inset_-4px_-4px_8px_#ffffff] outline-none transition-all focus:shadow-[inset_5px_5px_10px_#c2ccda,inset_-5px_-5px_10px_#ffffff,0_0_0_2px_rgba(59,130,246,0.25)]"
+                  />
+                </div>
+              </div>
+
               {/* Weight with Toggle */}
               <div className="relative">
                 <div className="flex items-center justify-between ml-1 mb-1.5">
@@ -417,9 +378,9 @@ export default function PremiumOnboardingPage() {
                     value={formData.weight || ""}
                     placeholder={formData.weightUnit === 'kg' ? "e.g. 70" : "e.g. 155"}
                     onChange={(e) => setFormData((p) => ({ ...p, weight: e.target.value }))}
-                    className="h-14 w-full appearance-none rounded-2xl bg-[#dde4ee] px-5 text-base font-semibold text-slate-800 placeholder:text-slate-400 shadow-[inset_4px_4px_8px_#c2ccda,inset_-4px_-4px_8px_#ffffff] outline-none transition-all focus:shadow-[inset_5px_5px_10px_#c2ccda,inset_-5px_-5px_10px_#ffffff,0_0_0_2px_rgba(59,130,246,0.25)]"
+                    className="h-14 w-full appearance-none rounded-2xl bg-[#dde4ee] px-5 text-base font-semibold text-slate-800 placeholder:text-slate-400 shadow-[inset_4px_4px_8px_#c2ccda,inset_-4px_-4px_8px_#ffffff] outline-none transition-all focus:shadow-[inset_5px_5px_10px_#c2ccda,inset_-5px_-5px_10px_#ffffff,0_0_0_2px_rgba(59,130,246,0.25)] overflow-hidden"
                   />
-                  <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-blue-400/80 tracking-widest uppercase">{formData.weightUnit}</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-blue-500">{formData.weightUnit === 'kg' ? 'KG' : 'LBS'}</span>
                 </div>
               </div>
 
@@ -455,9 +416,9 @@ export default function PremiumOnboardingPage() {
                       value={formData.height || ""}
                       placeholder="e.g. 170"
                       onChange={(e) => setFormData((p) => ({ ...p, height: e.target.value }))}
-                      className="h-14 w-full appearance-none rounded-2xl bg-[#dde4ee] px-5 text-base font-semibold text-slate-800 placeholder:text-slate-400 shadow-[inset_4px_4px_8px_#c2ccda,inset_-4px_-4px_8px_#ffffff] outline-none transition-all focus:shadow-[inset_5px_5px_10px_#c2ccda,inset_-5px_-5px_10px_#ffffff,0_0_0_2px_rgba(59,130,246,0.25)]"
+                      className="h-14 w-full appearance-none rounded-2xl bg-[#dde4ee] px-5 text-base font-semibold text-slate-800 placeholder:text-slate-400 shadow-[inset_4px_4px_8px_#c2ccda,inset_-4px_-4px_8px_#ffffff] outline-none transition-all focus:shadow-[inset_5px_5px_10px_#c2ccda,inset_-5px_-5px_10px_#ffffff,0_0_0_2px_rgba(59,130,246,0.25)] overflow-hidden"
                     />
-                    <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-blue-400/80 tracking-widest uppercase">cm</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-blue-500">CM</span>
                   </div>
                 ) : (
                   <div className="flex gap-3 animate-in fade-in zoom-in-95 duration-300">
@@ -467,9 +428,9 @@ export default function PremiumOnboardingPage() {
                         placeholder="5"
                         value={formData.heightFt || ""}
                         onChange={(e) => setFormData((p) => ({ ...p, heightFt: e.target.value }))}
-                        className="h-14 w-full appearance-none rounded-2xl bg-[#dde4ee] px-5 pr-10 text-base font-semibold text-slate-800 placeholder:text-slate-400 shadow-[inset_4px_4px_8px_#c2ccda,inset_-4px_-4px_8px_#ffffff] outline-none transition-all focus:shadow-[inset_5px_5px_10px_#c2ccda,inset_-5px_-5px_10px_#ffffff,0_0_0_2px_rgba(59,130,246,0.25)]"
+                        className="h-14 w-full appearance-none rounded-2xl bg-[#dde4ee] px-5 pr-10 text-base font-semibold text-slate-800 placeholder:text-slate-400 shadow-[inset_4px_4px_8px_#c2ccda,inset_-4px_-4px_8px_#ffffff] outline-none transition-all focus:shadow-[inset_5px_5px_10px_#c2ccda,inset_-5px_-5px_10px_#ffffff,0_0_0_2px_rgba(59,130,246,0.25)] overflow-hidden"
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-blue-400/80 tracking-widest uppercase">ft</span>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-blue-500">FT</span>
                     </div>
                     <div className="relative flex-1">
                       <input
@@ -477,23 +438,29 @@ export default function PremiumOnboardingPage() {
                         placeholder="9"
                         value={formData.heightIn || ""}
                         onChange={(e) => setFormData((p) => ({ ...p, heightIn: e.target.value }))}
-                        className="h-14 w-full appearance-none rounded-2xl bg-[#dde4ee] px-5 pr-10 text-base font-semibold text-slate-800 placeholder:text-slate-400 shadow-[inset_4px_4px_8px_#c2ccda,inset_-4px_-4px_8px_#ffffff] outline-none transition-all focus:shadow-[inset_5px_5px_10px_#c2ccda,inset_-5px_-5px_10px_#ffffff,0_0_0_2px_rgba(59,130,246,0.25)]"
+                        className="h-14 w-full appearance-none rounded-2xl bg-[#dde4ee] px-5 pr-10 text-base font-semibold text-slate-800 placeholder:text-slate-400 shadow-[inset_4px_4px_8px_#c2ccda,inset_-4px_-4px_8px_#ffffff] outline-none transition-all focus:shadow-[inset_5px_5px_10px_#c2ccda,inset_-5px_-5px_10px_#ffffff,0_0_0_2px_rgba(59,130,246,0.25)] overflow-hidden"
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-blue-400/80 tracking-widest uppercase">in</span>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-blue-500">IN</span>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Date of Birth */}
+              {/* Age */}
               <div className="relative">
                 <label className="ml-1 mb-1 block text-xs font-bold uppercase tracking-widest text-slate-500">
-                  Date of Birth
+                  Your Age
                 </label>
-                <DateDropdownPicker 
-                  value={formData.dateOfBirth} 
-                  onChange={(val) => setFormData(p => ({ ...p, dateOfBirth: val }))} 
-                />
+                <div className="relative">
+                  <input
+                    id="age"
+                    type="number"
+                    value={formData.age || ""}
+                    placeholder="e.g. 22"
+                    onChange={(e) => setFormData((p) => ({ ...p, age: e.target.value }))}
+                    className="h-14 w-full appearance-none rounded-2xl bg-[#dde4ee] px-5 text-base font-semibold text-slate-800 placeholder:text-slate-400 shadow-[inset_4px_4px_8px_#c2ccda,inset_-4px_-4px_8px_#ffffff] outline-none transition-all focus:shadow-[inset_5px_5px_10px_#c2ccda,inset_-5px_-5px_10px_#ffffff,0_0_0_2px_rgba(59,130,246,0.25)] overflow-hidden"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -592,13 +559,12 @@ export default function PremiumOnboardingPage() {
                 onClick={handleNext}
                 className="mx-auto flex h-[58px] w-full max-w-[320px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 text-lg font-bold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40 hover:shadow-xl active:scale-[0.98]"
               >
-                Let&apos;s Hydrate <ArrowRight className="size-5" />
+                Let's Hydrate <ArrowRight className="size-5" />
               </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   )
 }

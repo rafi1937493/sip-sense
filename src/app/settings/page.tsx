@@ -182,11 +182,9 @@ export default function SettingsPage() {
                   onClick: () => setIsHeightDrawerOpen(true) 
                 },
                 { 
-                  label: "Date of Birth", 
-                  value: user.dateOfBirth ? 
-                    new Date(user.dateOfBirth).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 
-                    "Not set", 
-                  onClick: () => setIsDOBDrawerOpen(true) 
+                  label: "Age", 
+                  value: user.age ? `${user.age} years` : "Not set", 
+                  onClick: () => { } 
                 },
               ].map((item, idx, arr) => (
                 <button 

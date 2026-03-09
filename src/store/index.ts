@@ -32,6 +32,10 @@ interface HydrationState {
   // Onboarding state
   isOnboarded: boolean
   setIsOnboarded: (value: boolean) => void
+  
+  // Onboarding complete flag
+  onboardingComplete: boolean
+  setOnboardingComplete: (value: boolean) => void
 }
 
 export const useHydrationStore = create<HydrationState>()(
@@ -44,6 +48,7 @@ export const useHydrationStore = create<HydrationState>()(
       success: null,
       todayLogs: [],
       isOnboarded: false,
+      onboardingComplete: false,
 
       // User profile actions
       setUser: async (user) => {
@@ -62,7 +67,7 @@ export const useHydrationStore = create<HydrationState>()(
                 weight_unit: user.weightUnit,
                 height: user.height,
                 height_unit: user.heightUnit,
-                date_of_birth: user.dateOfBirth ? (typeof user.dateOfBirth === 'string' ? user.dateOfBirth : new Date(user.dateOfBirth).toISOString().split('T')[0]) : null,
+                age: user.age || null,
                 daily_goal: user.dailyGoal,
                 reminders_enabled: user.remindersEnabled || false,
                 reminder_start: user.reminderStart || '08:00',
@@ -102,7 +107,7 @@ export const useHydrationStore = create<HydrationState>()(
               weight_unit: updatedUser.weightUnit,
               height: updatedUser.height,
               height_unit: updatedUser.heightUnit,
-              date_of_birth: updatedUser.dateOfBirth ? (typeof updatedUser.dateOfBirth === 'string' ? updatedUser.dateOfBirth : new Date(updatedUser.dateOfBirth).toISOString().split('T')[0]) : null,
+              age: updatedUser.age || null,
               daily_goal: updatedUser.dailyGoal,
               reminders_enabled: updatedUser.remindersEnabled ?? false,
               reminder_start: updatedUser.reminderStart ?? '08:00',
@@ -223,7 +228,7 @@ export const useHydrationStore = create<HydrationState>()(
                 weightUnit: profile.weight_unit,
                 height: profile.height,
                 heightUnit: profile.height_unit,
-                dateOfBirth: profile.date_of_birth ? new Date(profile.date_of_birth) : undefined,
+                age: profile.age || undefined,
                 dailyGoal: profile.daily_goal,
                 remindersEnabled: profile.reminders_enabled,
                 reminderStart: profile.reminder_start,
@@ -289,6 +294,9 @@ export const useHydrationStore = create<HydrationState>()(
       
       // Onboarding state
       setIsOnboarded: (value) => set({ isOnboarded: value }),
+      
+      // Onboarding complete flag
+      setOnboardingComplete: (value) => set({ onboardingComplete: value }),
     }),
     {
       name: 'sipsense-storage',
@@ -296,6 +304,7 @@ export const useHydrationStore = create<HydrationState>()(
         user: state.user,
         todayLogs: state.todayLogs,
         isOnboarded: state.isOnboarded,
+        onboardingComplete: state.onboardingComplete,
       }),
     }
   )

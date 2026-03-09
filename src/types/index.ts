@@ -69,9 +69,10 @@ export interface UserProfile {
   weightUnit?: 'kg' | 'lbs'
   height?: number
   heightUnit?: 'cm' | 'ft'
+  age?: number
+  dateOfBirth?: Date | string // Deprecated: use age instead
   avatarColor?: string
   avatarImage?: string
-  dateOfBirth?: Date | string
   dailyGoal: number
   createdAt?: Date
   updatedAt?: Date
