@@ -6,7 +6,6 @@ import { ArrowLeft, ArrowRight, Check, Camera } from "lucide-react"
 import { useHydrationStore } from "@/store"
 import { DAILY_GOAL_OPTIONS } from "@/types"
 import { cn } from "@/lib/utils"
-import { authClient } from "@/lib/auth"
 import { supabase } from "@/lib/supabaseClient"
 
 type Step = "welcome" | "profile" | "goal"
@@ -61,7 +60,18 @@ const WaterSphere = () => (
 
 export default function PremiumOnboardingPage() {
   const router = useRouter()
-  const { data: session, isPending: isLoading } = authClient.useSession()
+  const [isLoading, setIsLoading] = useState(true)
+  const [session, setSession] = useState<any>(null)
+
+  // Check session using useEffect to avoid hook order issues
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession()
+      setSession(data?.session)
+      setIsLoading(false)
+    }
+    checkSession()
+  }, [])
 
   // All hooks must be called before any early returns
   const [step, setStep] = useState<Step>("welcome")

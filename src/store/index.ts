@@ -118,7 +118,14 @@ export const useHydrationStore = create<HydrationState>()(
           set({ success: 'Saved! ✅' })
         } catch (err: any) {
           console.error('Supabase Error:', JSON.stringify(err), err.message, err.details, err.hint)
-          set({ error: 'Something went wrong ❌' })
+          // Provide more specific error messages
+          if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+            set({ error: 'Unable to connect. Please check your internet connection.' })
+          } else if (err.message?.includes('network')) {
+            set({ error: 'Network error. Please try again.' })
+          } else {
+            set({ error: 'Something went wrong ❌' })
+          }
         } finally {
           set({ isLoading: false })
         }

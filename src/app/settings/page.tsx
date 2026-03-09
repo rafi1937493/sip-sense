@@ -211,62 +211,66 @@ export default function SettingsPage() {
           </div>
 
           {/* ── Reminders Card ── */}
-          <div className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm">
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-2">
                 <Bell className={cn("size-5", user.remindersEnabled ? "text-blue-500" : "text-slate-300")} />
-                <span className="text-[15px] font-bold text-[#0d1f3c]">Drink Reminders</span>
+                <span className="text-[15px] font-semibold text-[#0d1f3c]">Drink Reminders</span>
               </div>
               <button 
                 onClick={handleToggleReminders}
                 className={cn(
-                  "relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
-                  user.remindersEnabled ? "bg-blue-600" : "bg-slate-200"
+                  "relative inline-flex shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                  user.remindersEnabled ? "bg-blue-600" : "bg-slate-200",
+                  "min-w-[44px] min-h-[24px]"
                 )}
               >
                 <span 
                   className={cn(
-                    "pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out",
-                    user.remindersEnabled ? "translate-x-5" : "translate-x-0"
+                    "pointer-events-none inline-block transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out",
+                    user.remindersEnabled ? "translate-x-5" : "translate-x-0",
+                    "h-5 w-5"
                   )} 
                 />
               </button>
             </div>
 
             {user.remindersEnabled && (
-              <div className="flex flex-col gap-5 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex flex-col gap-6">
                 {/* Time Inputs Section */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-2">
-                    <label className="font-medium text-gray-700">Start Time</label>
+                    <label className="font-medium text-gray-700 ml-1">Start Time</label>
                     <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                      <Clock className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-400 z-10" />
                       <input 
                         type="time" 
                         value={user.reminderStart || "08:00"}
                         onChange={(e) => updateUser({ reminderStart: e.target.value })}
-                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full h-12 pl-12 pr-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 tabular-nums text-base"
+                        style={{ border: '1px solid #e2e8f0' }}
                       />
                     </div>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className="font-medium text-gray-700">End Time</label>
+                    <label className="font-medium text-gray-700 ml-1">End Time</label>
                     <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                      <Clock className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-400 z-10" />
                       <input 
                         type="time" 
                         value={user.reminderEnd || "22:00"}
                         onChange={(e) => updateUser({ reminderEnd: e.target.value })}
-                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full h-12 pl-12 pr-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 tabular-nums text-base"
+                        style={{ border: '1px solid #e2e8f0' }}
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Slider */}
-                <div className="flex flex-col gap-2">
-                  <label className="font-medium text-gray-700">Reminder Interval</label>
+                <div className="flex flex-col gap-3 pt-2">
+                  <label className="font-medium text-gray-700 ml-1">Reminder Interval</label>
                   <input
                     type="range"
                     min="30"
@@ -274,12 +278,15 @@ export default function SettingsPage() {
                     step="15"
                     value={user.reminderInterval || 60}
                     onChange={(e) => updateUser({ reminderInterval: parseInt(e.target.value) })}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    className="w-full appearance-none cursor-pointer accent-blue-600 h-2"
+                    style={{ backgroundColor: '#e2e8f0', borderRadius: '4px' }}
                   />
-                  <div className="text-center text-sm font-medium text-gray-600">
-                    {((user.reminderInterval || 60) >= 60) 
-                      ? `${(user.reminderInterval || 60) / 60} hour${((user.reminderInterval || 60) / 60) > 1 ? 's' : ''}` 
-                      : `${user.reminderInterval || 60} minutes`}
+                  <div className="text-center py-1">
+                    <span className="text-slate-600 text-sm font-medium">
+                      {((user.reminderInterval || 60) >= 60) 
+                        ? `${(user.reminderInterval || 60) / 60} hour${((user.reminderInterval || 60) / 60) > 1 ? 's' : ''}` 
+                        : `${user.reminderInterval || 60} minutes`}
+                    </span>
                   </div>
                 </div>
               </div>
