@@ -7,6 +7,7 @@ import { PWASupport } from "@/components/features/pwa-support"
 import { PWAInstallPrompt } from "@/components/features/pwa-install-prompt"
 import { OfflineBanner } from "@/components/features/offline-banner"
 import { cn } from "@/lib/utils"
+import { Analytics } from "@vercel/analytics/next"
 
 const publicSans = Public_Sans({subsets:['latin'],variable:'--font-sans'});
 
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <PWAInstallPrompt />
           <OfflineBanner />
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   )
