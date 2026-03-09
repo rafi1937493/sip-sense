@@ -150,21 +150,7 @@ export default function PremiumOnboardingPage() {
   const router = useRouter()
   const { data: session, isPending: isLoading } = authClient.useSession()
 
-  // Redirect to home if user is already logged in
-  useEffect(() => {
-    if (!isLoading && session) {
-      router.push("/")
-    }
-  }, [session, isLoading, router])
-
-  // Show loading while checking session
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900">
-        <div className="animate-pulse text-white/60">Loading...</div>
-      </div>
-    )
-  }
+  // All hooks must be called before any early returns
   const [step, setStep] = useState<Step>("welcome")
   const [formData, setFormData] = useState({
     weight: "",
@@ -179,9 +165,17 @@ export default function PremiumOnboardingPage() {
 
   const { setUser, setIsOnboarded } = useHydrationStore()
 
+  // Redirect to home if user is already logged in
+  useEffect(() => {
+    if (!isLoading && session) {
+      router.push("/")
+    }
+  }, [session, isLoading, router])
+
   // Smart Hydration Goal Calculation
   const recommendedGoal = useMemo(() => {
-    if (!formData.weight || !formData.dateOfBirth) return 2500;
+    // Return default when loading to maintain hook order
+    if (isLoading || !formData.weight || !formData.dateOfBirth) return 2500;
     
     // Weight conversion to kg
     let w = Number(formData.weight);
@@ -200,7 +194,7 @@ export default function PremiumOnboardingPage() {
     
     // Round to nearest 50ml
     return Math.round(base / 50) * 50;
-  }, [formData.weight, formData.weightUnit, formData.dateOfBirth]);
+  }, [isLoading, formData.weight, formData.weightUnit, formData.dateOfBirth]);
 
   // Which option is the "Recommended" one?
   const recommendedOption = useMemo(() => {
@@ -224,6 +218,15 @@ export default function PremiumOnboardingPage() {
       }
     }
   }, [step, recommendedOption, recommendedGoal]);
+
+  // Show loading while checking session
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900">
+        <div className="animate-pulse text-white/60">Loading...</div>
+      </div>
+    )
+  }
 
   const handleSubmit = () => {
     let finalHeight = undefined
