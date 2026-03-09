@@ -73,6 +73,7 @@ export interface UserProfile {
   dateOfBirth?: Date | string // Deprecated: use age instead
   avatarColor?: string
   avatarImage?: string
+  avatarUrl?: string
   dailyGoal: number
   createdAt?: Date
   updatedAt?: Date

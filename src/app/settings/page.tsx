@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowRightFromLine, RefreshCw, ChevronRight, Pencil, Camera, Bell, Info } from "lucide-react"
+import { ArrowRightFromLine, RefreshCw, ChevronRight, Pencil, Camera, Bell, Clock, Info } from "lucide-react"
 import { useHydrationStore } from "@/store"
 import { BottomNav } from "@/components/features/bottom-nav"
 import { Button } from "@/components/ui/button"
@@ -211,14 +211,12 @@ export default function SettingsPage() {
           </div>
 
           {/* ── Reminders Card ── */}
-          <div className="bg-white rounded-[2rem] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex flex-col gap-0.5">
-                <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Drink Reminders</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <Bell className={cn("size-4", user.remindersEnabled ? "text-blue-500" : "text-slate-300")} />
-                  <span className="text-[15px] font-bold text-[#0d1f3c]">Enable Notifications</span>
-                </div>
+          <div className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-2">
+                <Bell className={cn("size-5", user.remindersEnabled ? "text-blue-500" : "text-slate-300")} />
+                <span className="text-[15px] font-bold text-[#0d1f3c]">Drink Reminders</span>
               </div>
               <button 
                 onClick={handleToggleReminders}
@@ -238,54 +236,50 @@ export default function SettingsPage() {
 
             {user.remindersEnabled && (
               <div className="flex flex-col gap-5 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                <div className="grid grid-cols-2 gap-3">
+                {/* Time Inputs Section */}
+                <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Start Time</label>
+                    <label className="font-medium text-gray-700">Start Time</label>
                     <div className="relative">
+                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
                       <input 
                         type="time" 
                         value={user.reminderStart || "08:00"}
                         onChange={(e) => updateUser({ reminderStart: e.target.value })}
-                        className="h-12 w-full rounded-xl border-2 border-slate-50 bg-slate-50/50 px-4 text-sm font-bold text-[#0d1f3c] outline-none focus:border-blue-500 transition-all appearance-none"
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                       />
-                      <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-slate-300 rotate-90 pointer-events-none" />
                     </div>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">End Time</label>
+                    <label className="font-medium text-gray-700">End Time</label>
                     <div className="relative">
+                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
                       <input 
                         type="time" 
                         value={user.reminderEnd || "22:00"}
                         onChange={(e) => updateUser({ reminderEnd: e.target.value })}
-                        className="h-12 w-full rounded-xl border-2 border-slate-50 bg-slate-50/50 px-4 text-sm font-bold text-[#0d1f3c] outline-none focus:border-blue-500 transition-all appearance-none"
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                       />
-                      <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-slate-300 rotate-90 pointer-events-none" />
                     </div>
                   </div>
                 </div>
 
+                {/* Slider */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Reminder Interval</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { label: "30 min", value: 30 },
-                      { label: "1 hour", value: 60 },
-                      { label: "2 hours", value: 120 }
-                    ].map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => updateUser({ reminderInterval: opt.value })}
-                        className={cn(
-                          "h-11 rounded-xl border-2 text-[13px] font-bold transition-all active:scale-95",
-                          user.reminderInterval === opt.value 
-                            ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-100" 
-                            : "bg-slate-50 border-transparent text-slate-500 hover:bg-slate-100"
-                        )}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
+                  <label className="font-medium text-gray-700">Reminder Interval</label>
+                  <input
+                    type="range"
+                    min="30"
+                    max="120"
+                    step="15"
+                    value={user.reminderInterval || 60}
+                    onChange={(e) => updateUser({ reminderInterval: parseInt(e.target.value) })}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                  />
+                  <div className="text-center text-sm font-medium text-gray-600">
+                    {((user.reminderInterval || 60) >= 60) 
+                      ? `${(user.reminderInterval || 60) / 60} hour${((user.reminderInterval || 60) / 60) > 1 ? 's' : ''}` 
+                      : `${user.reminderInterval || 60} minutes`}
                   </div>
                 </div>
               </div>

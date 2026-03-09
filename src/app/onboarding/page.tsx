@@ -2,11 +2,12 @@
 
 import { useState, useMemo, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight, Check } from "lucide-react"
+import { ArrowLeft, ArrowRight, Check, Camera } from "lucide-react"
 import { useHydrationStore } from "@/store"
 import { DAILY_GOAL_OPTIONS } from "@/types"
 import { cn } from "@/lib/utils"
 import { authClient } from "@/lib/auth"
+import { supabase } from "@/lib/supabaseClient"
 
 type Step = "welcome" | "profile" | "goal"
 
@@ -64,6 +65,8 @@ export default function PremiumOnboardingPage() {
 
   // All hooks must be called before any early returns
   const [step, setStep] = useState<Step>("welcome")
+  const [profileImage, setProfileImage] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -144,7 +147,7 @@ export default function PremiumOnboardingPage() {
     )
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     let finalHeight = undefined
     if (formData.heightUnit === "cm") {
       finalHeight = formData.height ? Number(formData.height) : undefined
@@ -163,6 +166,50 @@ export default function PremiumOnboardingPage() {
       finalWeight = formData.weight ? Math.round(Number(formData.weight) / 2.20462) : undefined
     }
 
+    // Upload profile image to Supabase Storage if present
+    let avatarUrl: string | undefined = undefined
+    if (profileImage) {
+      try {
+        // Convert base64 to blob
+        const response = await fetch(profileImage)
+        const blob = await response.blob()
+        
+        // Generate unique filename
+        const userId = '00000000-0000-0000-0000-000000000001'
+        const fileName = `${userId}-${Date.now()}.jpg`
+        
+        // Upload to Supabase Storage
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, blob, {
+            contentType: 'image/jpeg',
+            upsert: true
+          })
+        
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError.message)
+        } else {
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(fileName)
+          
+          avatarUrl = publicUrl
+          
+          // Update profiles table with avatar_url
+          await supabase
+            .from('profiles')
+            .upsert({
+              id: userId,
+              avatar_url: publicUrl,
+              updated_at: new Date().toISOString()
+            })
+        }
+      } catch (error) {
+        console.error('Error uploading profile image:', error)
+      }
+    }
+
     setUser({
       id: '00000000-0000-0000-0000-000000000001',
       email: formData.email || "user@sipsense.app",
@@ -173,6 +220,7 @@ export default function PremiumOnboardingPage() {
       heightUnit: formData.heightUnit,
       age: formData.age ? Number(formData.age) : undefined,
       dailyGoal: formData.dailyGoal,
+      avatarUrl: avatarUrl,
       createdAt: new Date(),
       updatedAt: new Date(),
     })
@@ -185,15 +233,74 @@ export default function PremiumOnboardingPage() {
     setTimeout(() => router.push("/"), 200)
   }
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === "welcome") return setStep("profile")
     if (step === "profile") return setStep("goal")
-    handleSubmit()
+    await handleSubmit()
   }
 
   const handleBack = () => {
     if (step === "goal") return setStep("profile")
     if (step === "profile") return setStep("welcome")
+  }
+
+  // Resize image to max 500px dimension
+  const resizeImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          const maxDim = 500
+          let { width, height } = img
+
+          if (width > height) {
+            if (width > maxDim) {
+              height = (height * maxDim) / width
+              width = maxDim
+            }
+          } else {
+            if (height > maxDim) {
+              width = (width * maxDim) / height
+              height = maxDim
+            }
+          }
+
+          canvas.width = width
+          canvas.height = height
+          const ctx = canvas.getContext('2d')
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height)
+            resolve(canvas.toDataURL('image/jpeg', 0.85))
+          } else {
+            reject(new Error('Could not get canvas context'))
+          }
+        }
+        img.onerror = () => reject(new Error('Could not load image'))
+        img.src = e.target?.result as string
+      }
+      reader.onerror = () => reject(new Error('Could not read file'))
+      reader.readAsDataURL(file)
+    })
+  }
+
+  // Handle file input change
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      try {
+        const resizedImage = await resizeImage(file)
+        setProfileImage(resizedImage)
+      } catch (error) {
+        console.error('Error processing image:', error)
+      }
+    }
+  }
+
+  // Trigger file input click
+  const triggerFileInput = () => {
+    fileInputRef.current?.click()
   }
 
   // Calculate the header height based on step
@@ -303,11 +410,44 @@ export default function PremiumOnboardingPage() {
 
           {/* ─── Dark Header ─── */}
           <div className="flex flex-col items-center justify-center pt-8" style={{ height: "32%" }}>
-            {/* Icon badge */}
-            <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm border border-white/15">
-              <svg className="size-7 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+            {/* Profile Avatar with Camera Badge */}
+            <div className="mb-4 relative">
+              <button
+                type="button"
+                onClick={triggerFileInput}
+                className="relative inline-flex items-center justify-center"
+              >
+                {/* Avatar Circle */}
+                <div 
+                  className="bg-white/10 backdrop-blur-sm border-2 border-white/20 shadow-lg"
+                  style={{ width: '90px', height: '90px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  {profileImage ? (
+                    <img
+                      src={profileImage}
+                      alt="Profile"
+                      className="size-full object-cover"
+                      style={{ borderRadius: '50%' }}
+                    />
+                  ) : (
+                    <svg className="size-10 text-blue-300" style={{ borderRadius: '50%' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  )}
+                </div>
+                {/* Camera Badge */}
+                <div className="absolute bottom-0 right-0 size-8 rounded-full bg-white shadow-md flex items-center justify-center z-10">
+                  <Camera className="size-3.5 text-slate-700" />
+                </div>
+              </button>
+              {/* Hidden File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
             </div>
             <h2 className="text-2xl font-extrabold text-white tracking-tight">Your Profile</h2>
             <p className="mt-1 text-sm font-medium text-blue-200/80">Let&apos;s get acquainted</p>
