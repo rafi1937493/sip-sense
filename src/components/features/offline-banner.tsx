@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { WIFI_OFF } from "lucide-react" // Or WIFI_OFF
 import { cn } from "@/lib/utils"
 
 export function OfflineBanner() {
