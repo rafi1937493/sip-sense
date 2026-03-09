@@ -4,7 +4,6 @@ import "./globals.css"
 import { AuthProvider } from "@/components/auth-provider"
 import { ReminderManager } from "@/components/features/reminder-manager"
 import { PWASupport } from "@/components/features/pwa-support"
-import { PWAInstallPrompt } from "@/components/features/pwa-install-prompt"
 import { OfflineBanner } from "@/components/features/offline-banner"
 import { cn } from "@/lib/utils"
 
@@ -60,7 +59,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <div className="mobile-container">{children}</div>
           <ReminderManager />
           <PWASupport />
-          <PWAInstallPrompt />
           <OfflineBanner />
         </AuthProvider>
       </body>

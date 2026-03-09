@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useHydrationStore } from "@/store"
 import { AddDrinkSheet } from "@/components/features/add-drink-sheet"
 import { DrinkHistoryList } from "@/components/features/drink-history-list"
+import { PWAInstallPrompt } from "@/components/features/pwa-install-prompt"
 import { calculateHydration, getHydrationMessage, QUICK_DRINKS, type DrinkType } from "@/types"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -184,7 +185,8 @@ export default function HomePage() {
     fetchInitialData,
     isLoading,
     error,
-    success 
+    success,
+    onboardingComplete
   } = useHydrationStore()
 
   useEffect(() => {
@@ -371,6 +373,7 @@ export default function HomePage() {
       </div>
 
       {/* ── Bottom Nav ── */}
+      {onboardingComplete && <PWAInstallPrompt />}
       <BottomTabBar active="/" />
 
       {/* ── Add Drink Sheet ── */}
